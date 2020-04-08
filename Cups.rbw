@@ -4,8 +4,10 @@ require_relative 'button'
 require_relative 'headerButton'
 require_relative 'frame'
 require_relative 'moveForm'
+require_relative 'updater'
 require 'fileutils'
 
+$version = '4.8.20'
 
 $sizex = 0
 $sizey = 0
@@ -22,6 +24,7 @@ $moveOriginX = 0
 $scaleRate = 0.5
 $xOrig = 0
 $yOrig = 0
+$updateActive = false
 
 #File.open("CustomCups.txt", "r") do |f|
 #	f.each_line do |line|
@@ -44,10 +47,17 @@ $yOrig = 0
 
 if ARGV.length == 0 
 	$temp = "TRUMPF_TruLaser_XXXX_S_Cups.txt;60;60;13.txt;2"
+	$params = $temp
 	#exit(0)
 else 
 	$temp = ARGV[0]
+	$params = ARGV[0]
 end
+
+
+
+
+
 $temp = $temp.split(';')
 $cupFile = $temp[0]
 $sizex = $temp[1].to_i
@@ -222,16 +232,16 @@ blueBack = Rectangle.new(
     z:1
 )
 
-
+update = Updater.new($temp)
 # Union.new([$sheetInt, $sheetExt])
 # button outline: #c0c0c0
 # button main: #e1e1e1
 # text: #1c2a36 or maybe black
 # check box: #008000
 
-save = Button.new($maxx - 125 + $leftBorder * 2, $maxy + 10 + $headerSize, 115, 30, "OK", 15, 47, 7) #SaveButton.new()
-cancel = Button.new($maxx - 255 + $leftBorder * 2, $maxy + 10 + $headerSize, 115, 30, "Cancel", 15, 35, 7) #CancelButton.new()
-setAsDefault = Button.new($maxx - 420 + $leftBorder * 2, $maxy + 10 + $headerSize, 150, 30, "Set as Default", 15, 32, 7)#SetAsDefaultButton.new()
+save = Button.new($maxx - 125 + $leftBorder * 2, $maxy + 10 + $headerSize, 115, 30, "OK", 15, 47, 7, 10) #SaveButton.new()
+cancel = Button.new($maxx - 255 + $leftBorder * 2, $maxy + 10 + $headerSize, 115, 30, "Cancel", 15, 35, 7, 10) #CancelButton.new()
+setAsDefault = Button.new($maxx - 420 + $leftBorder * 2, $maxy + 10 + $headerSize, 150, 30, "Set as Default", 15, 32, 7, 10)#SetAsDefaultButton.new()
 move = HeaderButton.new(180, 5, 50, $headerSize - 10, "Move", 7, $headerSize - 30)
 moveForm = MoveForm.new()
 frame = Frame.new()
@@ -393,70 +403,79 @@ end
 on :mouse_down do |event|
 	case event.button
 	when :left
-		i = 0
-		num = $cupList.length()
-		error = false
-		while i < num  do
-			if $cupList[i].contains?(event.x, event.y)
-				if !$moveCup
-					if $colorList[i] == 1
-						$cupList[i].setColor('blue')
-						$colorList[i] = 0
-					else
-						$cupList[i].setColor('red')
-						$colorList[i] = 1
+		if !$updateActive
+			i = 0
+			num = $cupList.length()
+			error = false
+			while i < num  do
+				if $cupList[i].contains?(event.x, event.y)
+					if !$moveCup
+						if $colorList[i] == 1
+							$cupList[i].setColor('blue')
+							$colorList[i] = 0
+						else
+							$cupList[i].setColor('red')
+							$colorList[i] = 1
+						end
+					else 
+						$selectedCup = $cupList[i] 
+						moveForm.setText($selectedCup.getText())
 					end
-				else 
-					$selectedCup = $cupList[i] 
-					moveForm.setText($selectedCup.getText())
 				end
+				#
+				# Produce error if cup is off sheet 
+				#
+				if (!$cupList[i].inSheet()) && ($colorList[i] == 1) # active, but not on sheet 
+					error = true;
+				end
+				i +=1
 			end
-			#
-			# Produce error if cup is off sheet 
-			#
-			if (!$cupList[i].inSheet()) && ($colorList[i] == 1) # active, but not on sheet 
-				error = true;
+			frame.warning(error, "Cup or cup in a group is active, but not on sheet.")
+			if save.contains?(event.x, event.y)
+				if ARGV.length != 0 
+					writeTolst(getHexValue())
+				end
+				exit(0)
+			elsif setAsDefault.contains?(event.x, event.y)
+				# if $moveCup 
+				# 	$moveCup = false 
+				# else 
+				# 	$moveCup = true
+				# end
+				writeDefaults(getHexValue())
+				checkErrors(frame)
+			elsif cancel.contains?(event.x, event.y)
+				exit(0)
+			elsif move.contains?(event.x, event.y)
+				tempXOrig = $xOrig
+				tempYOrig = $yOrig
+				$xOrig = 0
+				$yOrig = 0
+				if !$moveCup 
+					moveScreen($leftBorder, 0, true)
+				else 
+					moveScreen(-$leftBorder, 0, true)
+				end
+				frame.toggleLeftPanel()
+				moveForm.toggleLeftPanel()
+				$moveCup = !$moveCup
+				$xOrig = tempXOrig
+				$yOrig = tempYOrig
 			end
-			i +=1
-		end
-		frame.warning(error, "Cup or cup in a group is active, but not on sheet.")
-	if save.contains?(event.x, event.y)
-		if ARGV.length != 0 
-			writeTolst(getHexValue())
-		end
-		exit(0)
-	elsif setAsDefault.contains?(event.x, event.y)
-		# if $moveCup 
-		# 	$moveCup = false 
-		# else 
-		# 	$moveCup = true
-		# end
-		writeDefaults(getHexValue())
-		checkErrors(frame)
-	elsif cancel.contains?(event.x, event.y)
-		exit(0)
-	elsif move.contains?(event.x, event.y)
-		tempXOrig = $xOrig
-		tempYOrig = $yOrig
-		$xOrig = 0
-		$yOrig = 0
-		if !$moveCup 
-			moveScreen($leftBorder, 0, true)
 		else 
-			moveScreen(-$leftBorder, 0, true)
+			update.clicked(event.x, event.y)
 		end
-		frame.toggleLeftPanel()
-		moveForm.toggleLeftPanel()
-		$moveCup = !$moveCup
-		$xOrig = tempXOrig
-		$yOrig = tempYOrig
-	end
+	
+	
 	
 	when :middle
-		# Middle mouse button pressed down
-		$movement = true
-		$xOrig = event.x
-		$yOrig = event.y
+		if !$updateActive
+			# Middle mouse button pressed down
+			$movement = true
+			$xOrig = event.x
+			$yOrig = event.y
+		end
+	
 	when :right
 		# Right mouse button pressed down
 	end
@@ -464,42 +483,47 @@ on :mouse_down do |event|
 end
 
 on :mouse_move do |event| 
-	moveScreen(Window.mouse_x, Window.mouse_y, false)
-	
-	
-	if save.contains?(event.x, event.y) 
-		save.setActive()
-	elsif setAsDefault.contains?(event.x, event.y)
-		setAsDefault.setActive()
-	elsif cancel.contains?(event.x, event.y)
-		cancel.setActive()
-	elsif move.contains?(event.x, event.y) 
-		move.setActive()
-	else
-		moveForm.setActive(moveForm.contains(event.x, event.y))
-		save.notActive()
-		cancel.notActive()
-		setAsDefault.notActive()
-		move.notActive()
+	if !$updateActive
+		moveScreen(Window.mouse_x, Window.mouse_y, false)
 		
-		i = 0
-		num = $cupList.length()
-		while i < num  do
-			if $cupList[i].contains?(event.x, event.y)
-				cuppy = $cupList[i].getOverlap(event.x,event.y)
-				if cuppy != nil
-					$cupOutline.x = $cupList[i].getOverlap(event.x,event.y).x
-					$cupOutline.y = $cupList[i].getOverlap(event.x,event.y).y
-					$cupOutline.radius = $cupList[i].getOverlap(event.x,event.y).radius + 1
-					$cupOutline.opacity = 100
-					break
+		
+		if save.contains?(event.x, event.y) 
+			save.setActive()
+		elsif setAsDefault.contains?(event.x, event.y)
+			setAsDefault.setActive()
+		elsif cancel.contains?(event.x, event.y)
+			cancel.setActive()
+		elsif move.contains?(event.x, event.y) 
+			move.setActive()
+		else
+			moveForm.setActive(moveForm.contains(event.x, event.y))
+			
+			save.notActive()
+			cancel.notActive()
+			setAsDefault.notActive()
+			move.notActive()
+			
+			i = 0
+			num = $cupList.length()
+			while i < num  do
+				if $cupList[i].contains?(event.x, event.y)
+					cuppy = $cupList[i].getOverlap(event.x,event.y)
+					if cuppy != nil
+						$cupOutline.x = $cupList[i].getOverlap(event.x,event.y).x
+						$cupOutline.y = $cupList[i].getOverlap(event.x,event.y).y
+						$cupOutline.radius = $cupList[i].getOverlap(event.x,event.y).radius + 1
+						$cupOutline.opacity = 100
+						break
+					end
+				else 
+					$cupOutline.opacity = 0
 				end
-			else 
-				$cupOutline.opacity = 0
+				i +=1
 			end
-			i +=1
-		end
-	end 
+		end 
+	else 
+		update.setActive(update.contains(event.x, event.y))
+	end
 end 
 
 

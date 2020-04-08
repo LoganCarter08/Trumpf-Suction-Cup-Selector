@@ -2,19 +2,19 @@ require 'ruby2d'
 require_relative 'union'
 
 class Button 
-	def initialize(x,y,l,w,text,size,offx,offy)
+	def initialize(x,y,l,w,text,size,offx,offy, z)
 		@Outline = Rectangle.new(
 			x: x, y: y,
 			width: l, height: w,
 			color: '#c0c0c0',
-			z:10
+			z: z
 		)
 		
 		@Main = Rectangle.new(
 			x: x + 2, y: y + 2,
 			width: l - 4, height: w - 4,
 			color: '#e1e1e1',
-			z:11
+			z: z + 1
 		)
 		
 		@text = Text.new(
@@ -23,7 +23,7 @@ class Button
 			size: size,
 			color: '#1c2a36',
 			rotate: 0,
-			z: 12
+			z: z + 2
 		)
 		
 		@button = Union.new([@Outline, @Main, @text])

@@ -56,7 +56,7 @@ class MoveForm
 			z: 20
 		)
 		
-		@confirm = Button.new(-$leftBorder + $leftBorder/2 - 10, 150 + $headerSize, 50, 20, "Confirm", 10, 3, 3)
+		@confirm = Button.new(-$leftBorder + $leftBorder/2 - 10, 150 + $headerSize, 50, 20, "Confirm", 10, 3, 3, 10)
 		#
 		#@button = Union.new([@border1, @border2, @frame1, @frame2, @frame4, @warningOutline, @warningInternal])
 	end
