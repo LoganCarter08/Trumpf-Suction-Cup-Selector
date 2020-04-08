@@ -2,8 +2,6 @@ require 'ruby2d'
 require_relative 'union'
 require 'net/http'
 require 'uri'
-require "open-uri"
-require "down"
 require "fileutils"
 
 class Updater
@@ -94,15 +92,19 @@ class Updater
 	end
 	
 	def checkIfUpdate(num) 
-		@page_content = open('https://raw.githubusercontent.com/LoganCarter08/Trump-Suction-Cup-Selector/master/Version.txt')
-		remoteVersion = @page_content.split('.')
-		remoteVersionNum = remoteVersion[0].to_i * 100 + remoteVersion[1].to_i * 10 + remoteVersion[2].to_i
-		hide(num == remoteVersionNum)
+		if File.exists?('updater.exe') 
+			@page_content = open('http://info.sigmatek.net/downloads/TrumpfCups/version.txt')
+			remoteVersion = @page_content.split('.')
+			remoteVersionNum = remoteVersion[0].to_i * 100 + remoteVersion[1].to_i * 10 + remoteVersion[2].to_i
+			hide(num == remoteVersionNum)
+		else 
+			hide(true)
+		end
 	end
 	
 	def initUpdate()
 		#createInstaller()
-		system("start \"\" \"updater.exe\" \"" + $params + "\" " + @page_content + "\"")
+		system("start \"\" \"installer.exe\" \"" + $params + "\" " + @page_content + "\"")
 		#system(" start \"\" \"installer.exe\" \"" + $params + "\" ")
 		exit(0)
 	end
