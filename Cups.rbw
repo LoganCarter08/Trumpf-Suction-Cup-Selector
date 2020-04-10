@@ -10,29 +10,29 @@ require 'fileutils'
 require 'win32ole'
 require 'launchy'
 
-$version = '0.4.8.20'
+$version = '0.4.10.20'
 
 
-#network=WIN32OLE.new("Wscript.Network")
-#tempPath = ".//"
-#
-#me = Dir.open "C:\\Users\\" + network.username + "\\AppData\\Local\\Temp\\"
-#me.each do |file|
-#    if file.start_with?("ocr") 
-#		subFolder = Dir.open "C:\\Users\\" + network.username + "\\AppData\\Local\\Temp\\" + file
-#		subFolder.each do |fil| 
-#			if fil.start_with?("src")
-#				suby = Dir.open "C:\\Users\\" + network.username + "\\AppData\\Local\\Temp\\" + file + "\\src"
-#				suby.each do |fi|
-#					if fi.start_with?("Cups.rbw")
-#						tempPath = "C:\\Users\\" + network.username + "\\AppData\\Local\\Temp\\" + file + "\\src\\"
-#						break
-#					end
-#				end
-#			end
-#		end
-#	end
-#end
+network=WIN32OLE.new("Wscript.Network")
+tempPath = ".//"
+
+me = Dir.open "C:\\Users\\" + network.username + "\\AppData\\Local\\Temp\\"
+me.each do |file|
+    if file.start_with?("ocr") 
+		subFolder = Dir.open "C:\\Users\\" + network.username + "\\AppData\\Local\\Temp\\" + file
+		subFolder.each do |fil| 
+			if fil.start_with?("src")
+				suby = Dir.open "C:\\Users\\" + network.username + "\\AppData\\Local\\Temp\\" + file + "\\src"
+				suby.each do |fi|
+					if fi.start_with?("Cups.rbw")
+						tempPath = "C:\\Users\\" + network.username + "\\AppData\\Local\\Temp\\" + file + "\\src\\"
+						break
+					end
+				end
+			end
+		end
+	end
+end
 
 
 #pic = tempPath + "PartHandlerGUI.jpg"
@@ -287,8 +287,8 @@ update = Updater.new($temp)
 save = Button.new($maxx - 125 + $leftBorder * 2, $maxy + 10 + $headerSize, 115, 30, "OK", 15, 47, 7, 10) #SaveButton.new()
 cancel = Button.new($maxx - 255 + $leftBorder * 2, $maxy + 10 + $headerSize, 115, 30, "Cancel", 15, 35, 7, 10) #CancelButton.new()
 setAsDefault = Button.new($maxx - 420 + $leftBorder * 2, $maxy + 10 + $headerSize, 150, 30, "Set as Default", 15, 32, 7, 10)#SetAsDefaultButton.new()
-move = HeaderButton.new(180, 3, 50, $headerSize - 8, "Move", 7, $headerSize - 25, "img/move.png")
-about = HeaderButton.new($maxx + $leftBorder - 50, 3, 50, $headerSize - 8, "About", 5, $headerSize - 25, "img/about.png")
+move = HeaderButton.new(180, 3, 50, $headerSize - 8, "Move", 7, $headerSize - 25, tempPath + "img/move.png")
+about = HeaderButton.new($maxx + $leftBorder - 50, 3, 50, $headerSize - 8, "About", 5, $headerSize - 25, tempPath + "img/about.png")
 moveForm = MoveForm.new()
 frame = Frame.new()
 moveScreen(-$leftBorder, 0, true)
