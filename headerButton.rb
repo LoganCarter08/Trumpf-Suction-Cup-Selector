@@ -2,7 +2,7 @@ require 'ruby2d'
 require_relative 'union'
 
 class HeaderButton 
-	def initialize(x,y,l,w,text,offx,offy)
+	def initialize(x,y,l,w,text,offx,offy, pic)
 		@Outline = Rectangle.new(
 			x: x, y: y,
 			width: l, height: w,
@@ -27,6 +27,13 @@ class HeaderButton
 			z: 12
 		)
 		
+		@pic = Image.new(
+			pic,
+			x: x + 1, y: y - 5,
+			width: 50, height: 50,
+			z: 11
+		)
+		
 		@button = Union.new([@Outline, @Main, @text])
 	end
 	
@@ -35,6 +42,7 @@ class HeaderButton
 		if (x_position > @Outline.x) && (x_position < @Outline.x + @Outline.width) && (y_position > @Outline.y) && (y_position < @Outline.y + @Outline.height) 
 			return true
 		else 
+			notActive()
 			return false
 		end
 	end

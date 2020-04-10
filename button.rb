@@ -34,6 +34,7 @@ class Button
 		if (x_position > @Outline.x) && (x_position < @Outline.x + @Outline.width) && (y_position > @Outline.y) && (y_position < @Outline.y + @Outline.height) 
 			return true
 		else 
+			notActive()
 			return false
 		end
 	end
@@ -50,5 +51,11 @@ class Button
 	
 	def move(x)
 		@button.shift(x)
+	end
+	
+	def remove()
+		@Outline.remove
+		@Main.remove
+		@text.remove
 	end
 end

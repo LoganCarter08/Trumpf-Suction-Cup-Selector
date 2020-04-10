@@ -6,8 +6,8 @@ require "fileutils"
 
 class Updater
 	def initialize(params)
-		$version = $version.split('.')
-		vers = $version[0].to_i * 100 + $version[1].to_i * 10 + $version[2].to_i # essentially hash this to get a unique integer for version
+		version = $version.split('.')
+		vers = version[0].to_i * 100 + version[1].to_i * 10 + version[2].to_i # essentially hash this to get a unique integer for version
 		
 		
 		@frame = Rectangle.new(
@@ -37,21 +37,21 @@ class Updater
 		@cancel = Button.new(@box.x + 160, @box.y + 75, 60, 20, "Cancel", 10, 15, 4, 31)
 		#set width: $maxx + $leftBorder * 2
 		#set height: $maxy + 50 + $headerSize
-		
 		checkIfUpdate(vers)
 	end
 	
 	def hide(pos)
 		if pos 
 			# move off screen
-			@frame.x = @frame.x - 800
-			@box.x = @box.x - 800
-			@confirm.move(-800)
-			@cancel.move(-800)
-			$updateActive = false
+			@frame.remove
+			@box.remove
+			@confirm.remove()
+			@cancel.remove()
+			@text.remove
+			$menuActive = false
 		else 
 			# move on screen
-			$updateActive = true
+			$menuActive = true
 		end
 		
 	end
@@ -92,12 +92,16 @@ class Updater
 	end
 	
 	def checkIfUpdate(num) 
-		if File.exists?('updater.exe') 
-			@page_content = open('http://info.sigmatek.net/downloads/TrumpfCups/version.txt')
-			remoteVersion = @page_content.split('.')
-			remoteVersionNum = remoteVersion[0].to_i * 100 + remoteVersion[1].to_i * 10 + remoteVersion[2].to_i
-			hide(num == remoteVersionNum)
-		else 
+		begin
+			if File.exists?('updater.exe') 
+				@page_content = open('http://info.sigmatek.net/downloads/TrumpfCups/version.txt')
+				remoteVersion = @page_content.split('.')
+				remoteVersionNum = remoteVersion[0].to_i * 100 + remoteVersion[1].to_i * 10 + remoteVersion[2].to_i
+				hide(num == remoteVersionNum)
+			else 
+				hide(true)
+			end
+		rescue 
 			hide(true)
 		end
 	end

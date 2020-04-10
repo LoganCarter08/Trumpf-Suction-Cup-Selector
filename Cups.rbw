@@ -5,9 +5,49 @@ require_relative 'headerButton'
 require_relative 'frame'
 require_relative 'moveForm'
 require_relative 'updater'
+require_relative 'about'
 require 'fileutils'
+require 'win32ole'
+require 'launchy'
 
 $version = '4.8.20'
+
+
+#network=WIN32OLE.new("Wscript.Network")
+#tempPath = ".//"
+#
+#me = Dir.open "C:\\Users\\" + network.username + "\\AppData\\Local\\Temp\\"
+#me.each do |file|
+#    if file.start_with?("ocr") 
+#		subFolder = Dir.open "C:\\Users\\" + network.username + "\\AppData\\Local\\Temp\\" + file
+#		subFolder.each do |fil| 
+#			if fil.start_with?("src")
+#				suby = Dir.open "C:\\Users\\" + network.username + "\\AppData\\Local\\Temp\\" + file + "\\src"
+#				suby.each do |fi|
+#					if fi.start_with?("Cups.rbw")
+#						tempPath = "C:\\Users\\" + network.username + "\\AppData\\Local\\Temp\\" + file + "\\src\\"
+#						break
+#					end
+#				end
+#			end
+#		end
+#	end
+#end
+
+
+#pic = tempPath + "PartHandlerGUI.jpg"
+#Image.new(
+#  pic,
+#  x: 400, y: 200,
+#  width: 50, height: 25,
+#  color: [1.0, 0.5, 0.2, 1.0],
+#  rotate: 90,
+#  z: 100
+#)
+
+
+#Launchy.open("http://stackoverflow.com")
+
 
 $sizex = 0
 $sizey = 0
@@ -24,7 +64,7 @@ $moveOriginX = 0
 $scaleRate = 0.5
 $xOrig = 0
 $yOrig = 0
-$updateActive = false
+$menuActive = false
 
 #File.open("CustomCups.txt", "r") do |f|
 #	f.each_line do |line|
@@ -46,7 +86,7 @@ $updateActive = false
 #end
 
 if ARGV.length == 0 
-	$temp = "TRUMPF_TruLaser_XXXX_S_Cups.txt;60;60;13.txt;2"
+	$temp = "TRUMPF_TruLaser_XXXX_S_Cups.txt;60;60; ;2"
 	$params = $temp
 	#exit(0)
 else 
@@ -232,17 +272,23 @@ blueBack = Rectangle.new(
     z:1
 )
 
-update = Updater.new($temp)
+
+aboutMenu = About.new()
+aboutMenu.hide(true)
+#about = About.new()
+
 # Union.new([$sheetInt, $sheetExt])
 # button outline: #c0c0c0
 # button main: #e1e1e1
 # text: #1c2a36 or maybe black
 # check box: #008000
 
+update = Updater.new($temp)
 save = Button.new($maxx - 125 + $leftBorder * 2, $maxy + 10 + $headerSize, 115, 30, "OK", 15, 47, 7, 10) #SaveButton.new()
 cancel = Button.new($maxx - 255 + $leftBorder * 2, $maxy + 10 + $headerSize, 115, 30, "Cancel", 15, 35, 7, 10) #CancelButton.new()
 setAsDefault = Button.new($maxx - 420 + $leftBorder * 2, $maxy + 10 + $headerSize, 150, 30, "Set as Default", 15, 32, 7, 10)#SetAsDefaultButton.new()
-move = HeaderButton.new(180, 5, 50, $headerSize - 10, "Move", 7, $headerSize - 30)
+move = HeaderButton.new(180, 3, 50, $headerSize - 8, "Move", 7, $headerSize - 25, "img/move.png")
+about = HeaderButton.new($maxx + $leftBorder - 50, 3, 50, $headerSize - 8, "About", 5, $headerSize - 25, "img/about.png")
 moveForm = MoveForm.new()
 frame = Frame.new()
 moveScreen(-$leftBorder, 0, true)
@@ -403,7 +449,7 @@ end
 on :mouse_down do |event|
 	case event.button
 	when :left
-		if !$updateActive
+		if !$menuActive
 			i = 0
 			num = $cupList.length()
 			error = false
@@ -461,15 +507,22 @@ on :mouse_down do |event|
 				$moveCup = !$moveCup
 				$xOrig = tempXOrig
 				$yOrig = tempYOrig
+			elsif about.contains?(event.x, event.y)
+				aboutMenu = About.new()
+				about.notActive()
 			end
 		else 
-			update.clicked(event.x, event.y)
+			if update.contains(event.x, event.y) != -1
+				update.clicked(event.x, event.y)
+			elsif aboutMenu.contains(event.x, event.y) != -1
+				aboutMenu.clicked(event.x, event.y)
+			end
 		end
 	
 	
 	
 	when :middle
-		if !$updateActive
+		if !$menuActive
 			# Middle mouse button pressed down
 			$movement = true
 			$xOrig = event.x
@@ -483,7 +536,7 @@ on :mouse_down do |event|
 end
 
 on :mouse_move do |event| 
-	if !$updateActive
+	if !$menuActive
 		moveScreen(Window.mouse_x, Window.mouse_y, false)
 		
 		
@@ -495,13 +548,10 @@ on :mouse_move do |event|
 			cancel.setActive()
 		elsif move.contains?(event.x, event.y) 
 			move.setActive()
+		elsif about.contains?(event.x, event.y)
+			about.setActive()
 		else
 			moveForm.setActive(moveForm.contains(event.x, event.y))
-			
-			save.notActive()
-			cancel.notActive()
-			setAsDefault.notActive()
-			move.notActive()
 			
 			i = 0
 			num = $cupList.length()
@@ -522,7 +572,11 @@ on :mouse_move do |event|
 			end
 		end 
 	else 
-		update.setActive(update.contains(event.x, event.y))
+		if update.contains(event.x, event.y) != -1
+			update.setActive(update.contains(event.x, event.y))
+		elsif aboutMenu.contains(event.x, event.y) != -1
+			aboutMenu.setActive(aboutMenu.contains(event.x, event.y))
+		end
 	end
 end 
 
