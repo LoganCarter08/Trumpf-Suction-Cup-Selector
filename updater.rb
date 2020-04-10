@@ -7,7 +7,7 @@ require "fileutils"
 class Updater
 	def initialize(params)
 		version = $version.split('.')
-		vers = version[0].to_i * 100 + version[1].to_i * 10 + version[2].to_i # essentially hash this to get a unique integer for version
+		vers = version[0].to_i * 1000 + version[1].to_i * 100 + version[2].to_i* 10 + version[3].to_i # essentially hash this to get a unique integer for version
 		
 		
 		@frame = Rectangle.new(
@@ -96,7 +96,7 @@ class Updater
 			if File.exists?('updater.exe') 
 				@page_content = open('http://info.sigmatek.net/downloads/TrumpfCups/version.txt')
 				remoteVersion = @page_content.split('.')
-				remoteVersionNum = remoteVersion[0].to_i * 100 + remoteVersion[1].to_i * 10 + remoteVersion[2].to_i
+				remoteVersionNum = remoteVersion[0].to_i * 1000 + remoteVersion[1].to_i * 100 + remoteVersion[2].to_i * 10 + remoteVersion[3].to_i
 				hide(num == remoteVersionNum)
 			else 
 				hide(true)

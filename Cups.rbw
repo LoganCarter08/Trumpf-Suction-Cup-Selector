@@ -10,7 +10,7 @@ require 'fileutils'
 require 'win32ole'
 require 'launchy'
 
-$version = '4.8.20'
+$version = '0.4.8.20'
 
 
 #network=WIN32OLE.new("Wscript.Network")
