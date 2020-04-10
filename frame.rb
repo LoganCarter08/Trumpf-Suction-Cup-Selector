@@ -72,6 +72,21 @@ class Frame
 			opacity: 0
 		)
 		
+		@excla = Circle.new(
+			x: 25, y:  $headerSize + $maxy + 34,
+			radius: 2,
+			sectors: 90,
+			color: 'black',
+			z: 21,
+		)
+		
+		@exclam = Rectangle.new(
+			x: 23, y: $headerSize + $maxy + 20,
+			width: 4, height: 10,
+			color: 'black',
+			z: 21
+		)
+		
 		@warning = Text.new(
 			" ",
 			x: 42, y: $headerSize + $maxy + 26,
@@ -82,7 +97,7 @@ class Frame
 			opacity: 0
 		)
 		
-		@button = Union.new([@border1, @border2, @frame1, @frame2, @frame4, @warningOutline, @warningInternal])
+		#@button = Union.new([@border1, @border2, @frame1, @frame2, @frame4, @warningOutline, @warningInternal])
 	end
 	
 	def contains?(x_position,y_position)
@@ -98,6 +113,8 @@ class Frame
 		if booly 
 			@warningOutline.opacity = 100
 			@warningInternal.opacity = 100
+			@excla.opacity = 100
+			@exclam.opacity = 100
 			
 			@warning.remove
 			@warning = Text.new(
@@ -111,6 +128,8 @@ class Frame
 		else 
 			@warningOutline.opacity = 0
 			@warningInternal.opacity = 0
+			@excla.opacity = 0
+			@exclam.opacity = 0
 			
 			@warning.remove
 			@warning = Text.new(

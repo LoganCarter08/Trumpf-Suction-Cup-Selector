@@ -46,7 +46,7 @@ end
 #)
 
 
-#Launchy.open("http://stackoverflow.com")
+
 
 
 $sizex = 0
@@ -275,26 +275,25 @@ blueBack = Rectangle.new(
 
 aboutMenu = About.new()
 aboutMenu.hide(true)
-#about = About.new()
-
-# Union.new([$sheetInt, $sheetExt])
-# button outline: #c0c0c0
-# button main: #e1e1e1
-# text: #1c2a36 or maybe black
-# check box: #008000
-
-update = Updater.new($temp)
+update = Updater.new(true)
 save = Button.new($maxx - 125 + $leftBorder * 2, $maxy + 10 + $headerSize, 115, 30, "OK", 15, 47, 7, 10) #SaveButton.new()
 cancel = Button.new($maxx - 255 + $leftBorder * 2, $maxy + 10 + $headerSize, 115, 30, "Cancel", 15, 35, 7, 10) #CancelButton.new()
 setAsDefault = Button.new($maxx - 420 + $leftBorder * 2, $maxy + 10 + $headerSize, 150, 30, "Set as Default", 15, 32, 7, 10)#SetAsDefaultButton.new()
 move = HeaderButton.new(180, 3, 50, $headerSize - 8, "Move", 7, $headerSize - 25, tempPath + "img/move.png")
 about = HeaderButton.new($maxx + $leftBorder - 50, 3, 50, $headerSize - 8, "About", 5, $headerSize - 25, tempPath + "img/about.png")
+help = HeaderButton.new($maxx + $leftBorder + 15, 3, 50, $headerSize - 8, "Help", 9, $headerSize - 25, tempPath + "img/help.png")
 moveForm = MoveForm.new()
 frame = Frame.new()
 moveScreen(-$leftBorder, 0, true)
 
 
-def checkErrors(frame)
+def checkErrors(frame, error)
+	FileUtils.mkdir_p $cupFile.gsub("_Cups.txt", "") + " Suction Cups\\"
+	found = false
+	
+	file = File.open($cupFile.gsub("_Cups.txt", "") + " Suction Cups\\Defaults.txt", "a+")
+	file.close
+	
 	found = true
 	lines = IO.readlines($cupFile.gsub("_Cups.txt", "") + " Suction Cups\\Defaults.txt").map do |line|
 		temp = line.split(";")
@@ -304,9 +303,23 @@ def checkErrors(frame)
 	end
 	
 	frame.warning(found, "No default cup pattern found for this sheet size")
+	
+	if (error == false)
+		i = 0
+		while i < $cupList.length()  do
+			if (!$cupList[i].inSheet()) && ($colorList[i] == 1) # active, but not on sheet 
+				error = true;
+			end
+			i +=1
+		end
+	end
+	
+	if !((found) && (!error))
+		frame.warning(error, "Cup or cup in a group is active, but not on sheet.")
+	end
 end
 
-checkErrors(frame)
+checkErrors(frame, false)
 
 
 $cupOutline = Circle.new(
@@ -355,23 +368,15 @@ def getHexValue()
 		i = i + 1
 	end
 	
-	#print "\n"
-	#i = 0
-	#while i < binList.length do 
-	#	print binList[i]
-	#	i = i + 1
-	#end
 	hex = String.new
 	i = 0
 	while i < binGroup.length()
-		#print binGroup[i] + " "
 		j = 0
 		sum = 0
 		while j < 4 do 
 			sum = sum + ((binGroup[i][j]).to_i * 2 ** (4 - j - 1));
 			j = j + 1
 		end
-		#print sum.to_s(16).capitalize() + " "
 		hex = hex + sum.to_s(16).capitalize()
 		i = i + 1
 	end
@@ -450,38 +455,11 @@ on :mouse_down do |event|
 	case event.button
 	when :left
 		if !$menuActive
-			i = 0
-			num = $cupList.length()
-			error = false
-			while i < num  do
-				if $cupList[i].contains?(event.x, event.y)
-					if !$moveCup
-						if $colorList[i] == 1
-							$cupList[i].setColor('blue')
-							$colorList[i] = 0
-						else
-							$cupList[i].setColor('red')
-							$colorList[i] = 1
-						end
-					else 
-						$selectedCup = $cupList[i] 
-						moveForm.setText($selectedCup.getText())
-					end
-				end
-				#
-				# Produce error if cup is off sheet 
-				#
-				if (!$cupList[i].inSheet()) && ($colorList[i] == 1) # active, but not on sheet 
-					error = true;
-				end
-				i +=1
-			end
-			frame.warning(error, "Cup or cup in a group is active, but not on sheet.")
 			if save.contains?(event.x, event.y)
 				if ARGV.length != 0 
 					writeTolst(getHexValue())
 				end
-				exit(0)
+				update = Updater.new(false)
 			elsif setAsDefault.contains?(event.x, event.y)
 				# if $moveCup 
 				# 	$moveCup = false 
@@ -489,9 +467,9 @@ on :mouse_down do |event|
 				# 	$moveCup = true
 				# end
 				writeDefaults(getHexValue())
-				checkErrors(frame)
+				checkErrors(frame, false)
 			elsif cancel.contains?(event.x, event.y)
-				exit(0)
+				update = Updater.new(false)
 			elsif move.contains?(event.x, event.y)
 				tempXOrig = $xOrig
 				tempYOrig = $yOrig
@@ -510,6 +488,36 @@ on :mouse_down do |event|
 			elsif about.contains?(event.x, event.y)
 				aboutMenu = About.new()
 				about.notActive()
+			elsif help.contains?(event.x, event.y)
+				Launchy.open("http://info.sigmatek.net/downloads/TrumpfCups/index.html")
+			else 
+				i = 0
+				error = false
+				while i < $cupList.length()  do
+					if $cupList[i].contains?(event.x, event.y)
+						if !$moveCup
+							if $colorList[i] == 1
+								$cupList[i].setColor('blue')
+								$colorList[i] = 0
+							else
+								$cupList[i].setColor('red')
+								$colorList[i] = 1
+							end
+						else 
+							$selectedCup = $cupList[i] 
+							moveForm.setText($selectedCup.getText())
+						end
+					end
+					#
+					# Produce error if cup is off sheet 
+					#
+					if (!$cupList[i].inSheet()) && ($colorList[i] == 1) # active, but not on sheet 
+						error = true;
+					end
+					i +=1
+				end
+				#frame.warning(error, "Cup or cup in a group is active, but not on sheet.")
+				checkErrors(frame, error)
 			end
 		else 
 			if update.contains(event.x, event.y) != -1
@@ -550,6 +558,8 @@ on :mouse_move do |event|
 			move.setActive()
 		elsif about.contains?(event.x, event.y)
 			about.setActive()
+		elsif help.contains?(event.x, event.y)
+			help.setActive()
 		else
 			moveForm.setActive(moveForm.contains(event.x, event.y))
 			
