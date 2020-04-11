@@ -42,18 +42,13 @@ class Updater
 	end
 	
 	def hide(pos)
-		#if pos 
-		#	# move off screen
-		#	@frame.remove
-		#	@box.remove
-		#	@confirm.remove()
-		#	@cancel.remove()
-		#	@text.remove
-		#	$menuActive = false
-		#else 
+		if pos 
+			# move off screen
+			exit(0)
+		else 
 			# move on screen
 			$menuActive = true
-		#end
+		end
 		
 	end
 	

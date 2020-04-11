@@ -80,17 +80,25 @@ class Union
 			@sets[i].x = x * 4 + $sheetExt.x
 			@sets[i].y = y * 4 + $sheetExt.y
 			begin 
-				@sets[i].radius = rad 
+				@sets[i].radius = rad * 4
 			rescue 
 			end
 			begin
-				@sets[i + 1].x = x * 4 + rad + 2 + $sheetExt.x
-				@sets[i + 1].y = y * 4 - rad + $sheetExt.y
+				@sets[i + 1].x = x * 4 + (rad * 4) + 2 + $sheetExt.x
+				@sets[i + 1].y = y * 4 - (rad * 2) + $sheetExt.y
 			rescue 
 			end
 		end
 	end
 	return inSheet()
+  end
+  
+  def getCupInfo(x, y)
+	for i in 0..@sets.length() - 1
+		if @sets[i].contains?(x,y)
+			return [((@sets[i].x - $sheetExt.x) / 4).round(3), ((@sets[i].y - $sheetExt.y) / 4).round(3), (@sets[i].radius / 4).round(3), @sets[i + 1].text]
+		end
+	end
   end
   
   def totalMove(x,y)

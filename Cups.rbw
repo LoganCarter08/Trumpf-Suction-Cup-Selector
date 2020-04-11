@@ -48,7 +48,7 @@ end
 
 
 
-
+$selectedCup = -1
 $sizex = 0
 $sizey = 0
 $cupFile = " "
@@ -287,7 +287,7 @@ frame = Frame.new()
 moveScreen(-$leftBorder, 0, true)
 
 
-def checkErrors(frame, error)
+def checkErrors(frame)
 	FileUtils.mkdir_p $cupFile.gsub("_Cups.txt", "") + " Suction Cups\\"
 	found = false
 	
@@ -302,24 +302,25 @@ def checkErrors(frame, error)
 		end
 	end
 	
-	frame.warning(found, "No default cup pattern found for this sheet size")
 	
-	if (error == false)
-		i = 0
-		while i < $cupList.length()  do
-			if (!$cupList[i].inSheet()) && ($colorList[i] == 1) # active, but not on sheet 
-				error = true;
-			end
-			i +=1
+	
+	error = false
+	i = 0
+	while i < $cupList.length()  do
+		if (!$cupList[i].inSheet()) && ($colorList[i] == 1) # active, but not on sheet 
+			error = true;
 		end
+		i +=1
 	end
 	
-	if !((found) && (!error))
+	if error
 		frame.warning(error, "Cup or cup in a group is active, but not on sheet.")
+	else 
+		frame.warning(found, "No default cup pattern found for this sheet size")
 	end
 end
 
-checkErrors(frame, false)
+checkErrors(frame)
 
 
 $cupOutline = Circle.new(
@@ -435,20 +436,23 @@ def findActiveCups()
 		i += 1
 	end
 end
-
-def confirmCupMove()
+xx = -100
+yy = -100
+def confirmCupMove(x, y, rad, xPos, yPos)
 	# following section is used on move confirm command 
-	if $cupList[i].move(50,50,10,event.x,event.y) 
-		$cupList[i].setColor('red')
-		$colorList[i] = 1
-	else 
-		$cupList[i].setColor('blue')
-		$colorList[i] = 0
+	i = 0
+	while i < $cupList.length()
+		if $cupList[i].move(x,y,rad,xPos,yPos) 
+			$cupList[i].setColor('red')
+			$colorList[i] = 1
+		else 
+			$cupList[i].setColor('blue')
+			$colorList[i] = 0
+		end
+		$cupOutline.opacity = 0
+		i = i + 1
 	end
-	$cupOutline.opacity = 0
 end
-
-
 
 
 on :mouse_down do |event|
@@ -461,13 +465,8 @@ on :mouse_down do |event|
 				end
 				update = Updater.new(false)
 			elsif setAsDefault.contains?(event.x, event.y)
-				# if $moveCup 
-				# 	$moveCup = false 
-				# else 
-				# 	$moveCup = true
-				# end
 				writeDefaults(getHexValue())
-				checkErrors(frame, false)
+				checkErrors(frame)
 			elsif cancel.contains?(event.x, event.y)
 				update = Updater.new(false)
 			elsif move.contains?(event.x, event.y)
@@ -490,7 +489,14 @@ on :mouse_down do |event|
 				about.notActive()
 			elsif help.contains?(event.x, event.y)
 				Launchy.open("http://info.sigmatek.net/downloads/TrumpfCups/index.html")
-			else 
+			elsif moveForm.containsClick(event.x, event.y) != 0
+				moveForm.setActive(moveForm.containsClick(event.x, event.y))
+				if (moveForm.containsClick(event.x, event.y) == 1) and ($selectedCup != -1)
+					confirmCupMove(moveForm.getInput()[0].to_f, moveForm.getInput()[1].to_f, moveForm.getInput()[2].to_f, xx, yy)
+					moveForm.reset()
+					$selectedCup = -1
+				end
+			else
 				i = 0
 				error = false
 				while i < $cupList.length()  do
@@ -505,19 +511,18 @@ on :mouse_down do |event|
 							end
 						else 
 							$selectedCup = $cupList[i] 
-							moveForm.setText($selectedCup.getText())
+							xx = event.x
+							yy = event.y 
+							moveForm.setText($selectedCup.getCupInfo(xx, yy))
 						end
 					end
 					#
 					# Produce error if cup is off sheet 
 					#
-					if (!$cupList[i].inSheet()) && ($colorList[i] == 1) # active, but not on sheet 
-						error = true;
-					end
 					i +=1
 				end
 				#frame.warning(error, "Cup or cup in a group is active, but not on sheet.")
-				checkErrors(frame, error)
+				checkErrors(frame)
 			end
 		else 
 			if update.contains(event.x, event.y) != -1
@@ -560,9 +565,9 @@ on :mouse_move do |event|
 			about.setActive()
 		elsif help.contains?(event.x, event.y)
 			help.setActive()
+		elsif moveForm.containsMove(event.x, event.y) != 0
+			moveForm.setActiveMove(moveForm.containsMove(event.x, event.y))
 		else
-			moveForm.setActive(moveForm.contains(event.x, event.y))
-			
 			i = 0
 			num = $cupList.length()
 			while i < num  do
@@ -646,6 +651,10 @@ on :mouse_scroll do |event|
 	#	$sheetInt.x = $sheetInt.x - $averageX * $scaleRate * event.delta_y + $averageX
 	#	$sheetInt.y = $sheetInt.y - $averageY * $scaleRate * event.delta_y + $averageY
 	#end
+end
+
+on :key_down do |event|
+  moveForm.keyPress(event.key)
 end
 
 show
