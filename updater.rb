@@ -32,7 +32,7 @@ class Updater
 				z: 31
 			)
 			
-			@confirm = Button.new(@box.x + 230, @box.y + 75, 60, 20, "OK", 10, 22, 4, 31)
+			@confirm = Button.new(@box.x + 230, @box.y + 75, 60, 20, "OK", 10, 24, 4, 31)
 			@cancel = Button.new(@box.x + 160, @box.y + 75, 60, 20, "Cancel", 10, 15, 4, 31)
 			#set width: $maxx + $leftBorder * 2
 			#set height: $maxy + 50 + $headerSize
@@ -62,11 +62,15 @@ class Updater
 	end
 	
 	def contains(x_position,y_position)
-		if @confirm.contains?(x_position,y_position)
-			return 1
-		elsif @cancel.contains?(x_position,y_position)
-			return 2
-		else 
+		begin 
+			if @confirm.contains?(x_position,y_position)
+				return 1
+			elsif @cancel.contains?(x_position,y_position)
+				return 2
+			else 
+				return -1
+			end
+		rescue 
 			return -1
 		end
 	end
