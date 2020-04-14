@@ -287,6 +287,28 @@ frame = Frame.new()
 moveScreen(-$leftBorder, 0, true)
 
 
+
+def setCups(cupies)
+	cupies = cupies.split(',')
+	i = 0
+	begin
+		while i < cupies.length() do
+			$colorList[i] = cupies[i].to_i
+			if $colorList[i] == 0
+				$cupList[i].setColor('blue')
+			else
+				$cupList[i].setColor('red')
+			end
+			i = i+1
+		end
+	rescue 
+	
+	end
+end
+
+
+$firstRun = true
+
 def checkErrors(frame)
 	FileUtils.mkdir_p $cupFile.gsub("_Cups.txt", "") + " Suction Cups\\"
 	found = false
@@ -298,6 +320,10 @@ def checkErrors(frame)
 	lines = IO.readlines($cupFile.gsub("_Cups.txt", "") + " Suction Cups\\Defaults.txt").map do |line|
 		temp = line.split(";")
 		if (temp[0].to_i == $sizex / $multiplier) && (temp[1].to_i == $sizey / $multiplier)
+			if $firstRun
+				setCups(temp[3])
+				$firstRun = false
+			end
 			found = false
 		end
 	end
@@ -319,6 +345,7 @@ def checkErrors(frame)
 		frame.warning(found, "No default cup pattern found for this sheet size")
 	end
 end
+
 
 checkErrors(frame)
 
@@ -407,7 +434,7 @@ def writeDefaults(hex)
 		temp = line.split(";")
 		if (temp[0].to_i == $sizex / $multiplier) && (temp[1].to_i == $sizey / $multiplier)
 			found = true 
-			line.gsub(line, ($sizex / $multiplier).to_s + ";" + ($sizey / $multiplier).to_s + ";" + hex + ";" + $colorList.to_s)
+			line.gsub(line, ($sizex / $multiplier).to_s + ";" + ($sizey / $multiplier).to_s + ";" + hex + ";" + $colorList.to_s.tr('[', '').tr(']', '').tr(' ', ''))
 		end
 	end
 	
@@ -417,7 +444,7 @@ def writeDefaults(hex)
 		end
 	else 
 		File.open($cupFile.gsub("_Cups.txt", "") + " Suction Cups\\Defaults.txt", 'a') { |f|
-			f.puts ($sizex / $multiplier).to_s + ";" + ($sizey / $multiplier).to_s + ";" + hex + ";" + $colorList.to_s
+			f.puts ($sizex / $multiplier).to_s + ";" + ($sizey / $multiplier).to_s + ";" + hex + ";" + $colorList.to_s.tr('[', '').tr(']', '').tr(' ', '')
 		}
 	end
 end
@@ -468,6 +495,7 @@ on :mouse_down do |event|
 				writeDefaults(getHexValue())
 				checkErrors(frame)
 			elsif cancel.contains?(event.x, event.y)
+				cancel.notActive()
 				update = Updater.new(false)
 			elsif move.contains?(event.x, event.y)
 				tempXOrig = $xOrig
