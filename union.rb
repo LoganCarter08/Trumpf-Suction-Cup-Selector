@@ -93,6 +93,21 @@ class Union
 	return inSheet()
   end
   
+	def getFileFormat()
+		stringy = ""
+		for i in 0..@sets.length() - 1
+			begin
+				stringy = stringy + ((@sets[i].x - $sheetExt.x) / 4 * 25.4).round(0).to_s + ";" + ((@sets[i].y - $sheetExt.y) * 25.4 / 4).round(0).to_s + ";" + (@sets[i].radius / 4 * 25.4 * 2).round(0).to_s + ";"
+			rescue 
+			end
+		end
+		if stringy.length() <= 1
+			return "X"
+		else
+			return stringy
+		end
+	end
+  
   def getCupInfo(x, y)
 	for i in 0..@sets.length() - 1
 		if @sets[i].contains?(x,y)

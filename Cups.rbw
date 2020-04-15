@@ -6,11 +6,12 @@ require_relative 'frame'
 require_relative 'moveForm'
 require_relative 'updater'
 require_relative 'about'
+require_relative 'confirm'
 require 'fileutils'
 require 'win32ole'
 require 'launchy'
 
-$version = '0.4.11.20'
+$version = '0.4.15.20'
 
 
 network=WIN32OLE.new("Wscript.Network")
@@ -159,6 +160,17 @@ $j = 0
 $maxx = 0
 $maxy = 0
 
+def saveCupFile()
+	newCupFile = Array.new 
+	i = 0
+	while i < $cupList.length()
+		newCupFile.push($cupList[i].getFileFormat())
+		i = i + 1
+	end
+	File.open($cupFile, 'w') do |file|
+		file.puts newCupFile
+	end
+end
 
 File.open($cupFile.strip, "r") do |f|
   f.each_line do |line|
@@ -275,13 +287,22 @@ blueBack = Rectangle.new(
 
 aboutMenu = About.new()
 aboutMenu.hide(true)
+
+cupConfirm = Confirm.new("Are you sure you want to overwrite your cup file?")
+cupConfirm.hide(true)
+
 update = Updater.new(true)
 save = Button.new($maxx - 125 + $leftBorder * 2, $maxy + 10 + $headerSize, 115, 30, "OK", 15, 47, 7, 10) #SaveButton.new()
 cancel = Button.new($maxx - 255 + $leftBorder * 2, $maxy + 10 + $headerSize, 115, 30, "Cancel", 15, 35, 7, 10) #CancelButton.new()
 setAsDefault = Button.new($maxx - 420 + $leftBorder * 2, $maxy + 10 + $headerSize, 150, 30, "Set as Default", 15, 32, 7, 10)#SetAsDefaultButton.new()
-move = HeaderButton.new(180, 3, 50, $headerSize - 8, "Move", 7, $headerSize - 25, tempPath + "img/move.png")
 about = HeaderButton.new($maxx + $leftBorder - 50, 3, 50, $headerSize - 8, "About", 5, $headerSize - 25, tempPath + "img/about.png")
 help = HeaderButton.new($maxx + $leftBorder + 15, 3, 50, $headerSize - 8, "Help", 9, $headerSize - 25, tempPath + "img/help.png")
+
+move = HeaderButton.new(($maxx + $leftBorder * 2) / 2 - 70, 3, 50, $headerSize - 8, "Move", 7, $headerSize - 25, tempPath + "img/move.png")
+loadDefault = HeaderButton.new(($maxx + $leftBorder * 2) / 2, 3, 50, $headerSize - 8, "Default", 3, $headerSize - 25, tempPath + "img/default.png")
+auto = HeaderButton.new(($maxx + $leftBorder * 2) / 2 - 140, 3, 50, $headerSize - 8, "Auto", 9, $headerSize - 25, tempPath + "img/auto.png")
+saveToCups = HeaderButton.new(($maxx + $leftBorder * 2) / 2 - 210, 3, 50, $headerSize - 8, "Save", 9, $headerSize - 25, tempPath + "img/save.png")
+
 moveForm = MoveForm.new()
 frame = Frame.new()
 moveScreen(-$leftBorder, 0, true)
@@ -349,6 +370,35 @@ end
 
 checkErrors(frame)
 
+
+def autoCups(fram)
+	i = 0
+	while i < $cupList.length() do 
+		if $cupList[i].inSheet() 
+			$cupList[i].setColor('red')
+			$colorList[i] = 1
+		else 
+			$cupList[i].setColor('blue')
+			$colorList[i] = 0
+		end 
+		i = i + 1
+	end
+	checkErrors(fram)
+end
+
+
+def readDefaults(fram)
+	begin
+		lines = IO.readlines($cupFile.gsub("_Cups.txt", "") + " Suction Cups\\Defaults.txt").map do |line|
+			temp = line.split(";")
+			if (temp[0].to_i == $sizex / $multiplier) && (temp[1].to_i == $sizey / $multiplier)
+				setCups(temp[3])
+			end
+		end
+	rescue 
+	end
+	checkErrors(fram)
+end
 
 $cupOutline = Circle.new(
 	x: 0, y: 0,
@@ -465,20 +515,16 @@ def findActiveCups()
 end
 xx = -100
 yy = -100
-def confirmCupMove(x, y, rad, xPos, yPos)
+def confirmCupMove(x, y, rad, xPos, yPos, i)
 	# following section is used on move confirm command 
-	i = 0
-	while i < $cupList.length()
-		if $cupList[i].move(x,y,rad,xPos,yPos) 
-			$cupList[i].setColor('red')
-			$colorList[i] = 1
-		else 
-			$cupList[i].setColor('blue')
-			$colorList[i] = 0
-		end
-		$cupOutline.opacity = 0
-		i = i + 1
+	if $cupList[i - 1].move(x,y,rad,xPos,yPos) 
+		$cupList[i - 1].setColor('red')
+		$colorList[i - 1] = 1
+	else 
+		$cupList[i - 1].setColor('blue')
+		$colorList[i - 1] = 0
 	end
+	$cupOutline.opacity = 0
 end
 
 
@@ -517,10 +563,17 @@ on :mouse_down do |event|
 				about.notActive()
 			elsif help.contains?(event.x, event.y)
 				Launchy.open("http://info.sigmatek.net/downloads/TrumpfCups/index.html")
+			elsif loadDefault.contains?(event.x, event.y)
+				readDefaults(frame)
+			elsif auto.contains?(event.x, event.y)
+				autoCups(frame)
+			elsif saveToCups.contains?(event.x, event.y)
+				cupConfirm = Confirm.new("Are you sure you want to overwrite your cup file?")
+				saveToCups.notActive()
 			elsif moveForm.containsClick(event.x, event.y) != 0
 				moveForm.setActive(moveForm.containsClick(event.x, event.y))
 				if (moveForm.containsClick(event.x, event.y) == 1) and ($selectedCup != -1)
-					confirmCupMove(moveForm.getInput()[0].to_f, moveForm.getInput()[1].to_f, moveForm.getInput()[2].to_f, xx, yy)
+					confirmCupMove(moveForm.getInput()[0].to_f, moveForm.getInput()[1].to_f, moveForm.getInput()[2].to_f, xx, yy, moveForm.getInput()[3].to_i)
 					moveForm.reset()
 					$selectedCup = -1
 				end
@@ -557,6 +610,10 @@ on :mouse_down do |event|
 				update.clicked(event.x, event.y)
 			elsif aboutMenu.contains(event.x, event.y) != -1
 				aboutMenu.clicked(event.x, event.y)
+			elsif cupConfirm.contains(event.x, event.y) != -1
+				if cupConfirm.clicked(event.x, event.y)
+					saveCupFile()
+				end
 			end
 		end
 	
@@ -593,6 +650,12 @@ on :mouse_move do |event|
 			about.setActive()
 		elsif help.contains?(event.x, event.y)
 			help.setActive()
+		elsif loadDefault.contains?(event.x, event.y) 
+			loadDefault.setActive()
+		elsif auto.contains?(event.x, event.y) 
+			auto.setActive()
+		elsif saveToCups.contains?(event.x, event.y) 
+			saveToCups.setActive()
 		elsif moveForm.containsMove(event.x, event.y) != 0
 			moveForm.setActiveMove(moveForm.containsMove(event.x, event.y))
 		else
@@ -619,6 +682,8 @@ on :mouse_move do |event|
 			update.setActive(update.contains(event.x, event.y))
 		elsif aboutMenu.contains(event.x, event.y) != -1
 			aboutMenu.setActive(aboutMenu.contains(event.x, event.y))
+		elsif cupConfirm.contains(event.x, event.y) != -1
+			cupConfirm.setActive(cupConfirm.contains(event.x, event.y))
 		end
 	end
 end 

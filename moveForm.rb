@@ -170,7 +170,7 @@ class MoveForm
 	end
 	
 	def getInput()
-		return [@xBox.getText(), @yBox.getText(), @radBox.getText()]
+		return [@xBox.getText(), @yBox.getText(), @radBox.getText(), @boxTitle.text.gsub("Move ", "")]
 	end
 	
 	def reset()
